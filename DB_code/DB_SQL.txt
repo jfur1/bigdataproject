@@ -1,0 +1,45 @@
+-- Create Tables
+
+CREATE TABLE IF NOT EXISTS users (
+    user_id SERIAL NOT NULL,
+    user_first_name VARCHAR(30) NOT NULL,
+    user_last_name VARCHAR(45) NOT NULL,
+    user_email VARCHAR(45) NOT NULL,
+    user_password VARCHAR(45) NOT NULL,
+    verified BOOL DEFAULT FALSE NOT NULL,
+    PRIMARY KEY (user_id)
+);
+
+CREATE TABLE IF NOT EXISTS portfolios (
+    portfolio_id SERIAL NOT NULL,
+    total_funds DECIMAL(9,2) NOT NULL,
+    return DECIMAL(5,2) NOT NULL,
+    risk DECIMAL(5, 2) NOT NULL,
+    stock_1 VARCHAR(45) NOT NULL,
+    stock_2 VARCHAR(45) NULL,
+    stock_3 VARCHAR(45) NULL,
+    start TIMESTAMP NULL,
+    finish TIMESTAMP NULL,
+    interval VARCHAR(6) NULL,
+    user_id SERIAL,
+    PRIMARY KEY (portfolio_id),
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+);
+
+
+-- Insert Sample Data
+
+INSERT INTO users (user_first_name, user_last_name, user_email, user_password, verified)
+VALUES ('John', 'Furlong', 'johnfurlong24@gmail.com', 'stocks', FALSE),
+    ('Tristan', 'Hanna', 'trha@colorado.edu', 'bannanas', FALSE),
+    ('Garrett', 'Warren', 'gawa@colorado.edu', 'fishing', FALSE),
+    ('Carter', 'Redmond', 'care@colorado.edu', 'investor', FALSE)
+;
+
+INSERT INTO portfolios (total_funds, return, risk, stock_1, stock_2, stock_3, start, finish, interval, user_id)
+VALUES (150, 5.0, 3.5, 'AAPL', 'MSFT', 'NIKE', NULL, NULL, NULL, 4),
+    (200, 6, 4, 'TSLA', 'WLMT', 'MSFT', NULL, NULL, NULL, 3),
+    (125.50, 5, 2, 'TSLA', 'AMZN', 'GOOG', NULL, NULL, '1d', 2),
+    (500, 6, 3, 'AAPL', 'AMZN', 'GOOG', NULL, NULL, NULL, 1),
+    (100, 7.25, 4.5, 'GOOG', NULL, NULL, NULL, NULL, NULL, 1)
+;

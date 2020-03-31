@@ -1,0 +1,24 @@
+{
+  "name": "big_data_project",
+  "version": "1.0.0",
+  "description": "Portfolio Optimization",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "connect-flash": "^0.1.1",
+    "ejs": "^3.0.2",
+    "ejs-lint": "^1.0.1",
+    "express": "^4.17.1",
+    "express-session": "^1.17.0",
+    "flash": "^1.1.0",
+    "nodemon": "^2.0.2",
+    "pg-promise": "^10.4.4",
+    "sessions": "0.0.2-7"
+  }
+}
