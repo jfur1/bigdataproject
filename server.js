@@ -39,10 +39,24 @@ app.get('/home', (req, res) => {
     });
 });
 
+//Registration Page
+app.get('/registration', (req, res) => {
+    res.render('pages/registration', {
+        my_title: 'Registration'
+    });
+});
+
 // Login Page
 app.get('/login', (req, res) => {
     res.render('pages/login', {
         my_title: 'Login Page'
+    });
+});
+
+//Reset Page
+app.get('/reset', (req, res) => {
+    res.render('pages/reset', {
+        my_title: 'Reset Page'
     });
 });
 
