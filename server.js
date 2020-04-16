@@ -73,7 +73,7 @@ app.post('/login', (req, res, next) => {
                 res.render('pages/home');
         } else {
             console.log('Email verified via AWS instance. User Name: ', data.user_first_name);
-            return res.redirect('/calculator');
+            return res.redirect('/dashboard');
         }
     })
     .catch(err => {

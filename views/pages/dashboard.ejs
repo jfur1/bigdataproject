@@ -1,0 +1,56 @@
+<%- include('../partials/header') %>
+<%- include('../partials/menu') %>
+<div class="container">
+            <div class="col-8">
+				<div class="table-responsive">  
+					<table class="table">
+						<tr>
+							<th>Total Funds</th>
+							<td><% if(user_info){ %>
+									<%- user_info.total_funds + '$'%>
+								<% } %>
+							</td>
+						</tr>
+						<tr>
+							<th>Desired Return</th>
+							<td><% if(user_info){ %>
+									<%- user_info.return + '%'%>
+								<% } %>
+							</td>
+						</tr>
+						<tr>
+							<th>Desired Risk</th>
+							<td><% if(user_info){ %>
+									<%- user_info.risk + '%'%>
+								<% } %>
+							</td>
+						</tr>
+						<tr>
+                            <th>Stock 1</th>
+							<td>
+								<% if(user_info){ %>
+									<%- user_info.stock_1%>
+								<% } %>
+							</td>
+						</tr>
+						<tr>
+                            <th>Stock 2</th>
+							<td>
+								<% if(user_info){ %>
+									<%- user_info.stock_2 %>
+								<% } %>
+							</td>
+						</tr>
+						<tr>
+                            <th>Stock 3</th>
+							<td>
+								<% if(user_info){ %>
+									<%- user_info.stock_3 %>
+								<% } %>
+                            </td>
+						</tr>
+					</table>
+				</div>
+			</div>
+</div>
+<%- include('../partials/footer') %>
