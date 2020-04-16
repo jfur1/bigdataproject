@@ -81,9 +81,9 @@ app.post('/login', (req, res, next) => {
     });
 });
 
-app.get('/calculator', (req, res) => {
-    res.render('pages/calculator', {
-        my_title: 'Calculator'
+app.get('/dashboard', (req, res) => {
+    res.render('pages/dashboard', {
+        my_title: 'Dashboard'
     });
 });
 
