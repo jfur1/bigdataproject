@@ -1,4 +1,56 @@
 <%- include('../partials/header') %>
+<%- include('../partials/menu2') %>
+    <div class="row mt-5">
+    <div class="col-md-6 m-auto">
+      <div class="card-dark card-body">
+        <h1 class="text-center mb-3">
+          <i class="fas fa-user-plus"></i> Reset your Password
+        </h1>
 
-
+        <form action="/reset" method="POST">
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              class="form-control"
+              placeholder="Enter Email"
+              value="<%= typeof email != 'undefined' ? email : '' %>"
+            />
+          </div>
+          <div class="form-group">
+            <label for="password">New Password</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              class="form-control"
+              placeholder="Enter New Password"
+              value="<%= typeof password != 'undefined' ? password : '' %>"
+            />
+          </div>
+          <div class="form-group">
+            <label for="password2">Confirm New Passwpord</label>
+            <input
+              type="password"
+              id="password2"
+              name="password2"
+              class="form-control"
+              placeholder="Confirm New Password"
+              value="<%= typeof password2 != 'undefined' ? password2 : '' %>"
+            />
+          </div>
+            <br>
+          <button type="submit" class="btn btn-outline-light my-2 my-sm-0">
+              Reset my Password!
+          </button>
+        </form>
+        <br>
+        <p class="lead mt-4">
+          No Account? <a href="/registration">Register</a>
+        </p>
+      </div>
+    </div>
+    </div>
 <%- include('../partials/footer') %>

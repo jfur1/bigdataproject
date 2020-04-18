@@ -283,7 +283,7 @@ app.get('/login', (req, res) => {
     });
 });
 
-// Login Handler
+
 app.post('/login', (req, res, next) => {
     const { email } = req.body;
     let errors = [];
@@ -323,47 +323,12 @@ app.get('/dashboard', ensureAuthenticated, (req, res) => {
     });
 });
 
+//Reset Page
 app.get('/reset', (req, res) => {
-    res.render('pages/reset');
+    res.render('pages/reset', {
+        my_title: 'Reset Page'
+    });
 });
-
-// Optimization
-app.post('/optimization', ensureAuthenticated, (req, res) =>{
-    res.render('pages/optimization');
-    const {
-        stock1,
-        stock2,
-        stock3,
-        budget,
-        req_return,
-        start,
-        end,
-        period
-    } = req.body;
-    
-    var req = unirest("GET", 
-        "https://apidojo-yahoo-finance-v1.p.rapidapi.com/stock/v2/get-historical-data");
-
-    req.query({
-        "frequency": period,
-        "filter": "history",
-        "period1": "1546448400",
-        "period2": "1562086800",
-        "symbol": stock1
-    });
-
-    req.headers({
-        "x-rapidapi-host": "apidojo-yahoo-finance-v1.p.rapidapi.com",
-        "x-rapidapi-key": "3a6c5f19f5msh7f6a6a8ab33137dp1ff5c3jsnedbc4cb3b72b"
-    });
-    req.end(function (res) {
-        if (res.error) throw new Error(res.error);
-    
-        console.log(res.body[0]);
-    });
-
-});
-
 
 const PORT = process.env.PORT || 3000;
 

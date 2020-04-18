@@ -1,3 +1,5 @@
+<%- include('../partials/header') %>
+<%- include('../partials/menu2') %>
 <div class="row mt-5">
     <div class="col-md-6 m-auto">
       <div class="card card-body">
@@ -61,7 +63,8 @@
               value="<%= typeof password2 != 'undefined' ? password2 : '' %>"
             />
           </div>
-          <button type="submit" class="btn btn-primary btn-block">
+            <br>
+          <button type="submit" class="btn btn-outline-light my-2 my-sm-0">
             Register
           </button>
         </form>
@@ -69,3 +72,4 @@
       </div>
     </div>
   </div>
+<%- include('../partials/footer') %>
