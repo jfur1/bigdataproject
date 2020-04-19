@@ -20,42 +20,42 @@ const app = express();
 // console.log(portfolio.period)
 
 // ------- Testing Area --------- //
-const alpha = 0.02;  // Requested return percentage
-const r = [0.024, 0.018, 0.009];
-const r_t = math.transpose(r);
-const e = [1, 1, 1];
-const e_t = math.transpose(e);
-const Q = [ [.0033, .00163, -.0007524], 
-            [.00163, .00183, -.000563], 
-            [-.0007524, -.000563, .001976] ];
-const Q_inv = math.inv(Q);
-console.log('Q Inverse: ', Q_inv);
+// const alpha = 0.02;  // Requested return percentage
+// const r = [0.024, 0.018, 0.009];
+// const r_t = math.transpose(r);
+// const e = [1, 1, 1];
+// const e_t = math.transpose(e);
+// const Q = [ [.0033, .00163, -.0007524], 
+//             [.00163, .00183, -.000563], 
+//             [-.0007524, -.000563, .001976] ];
+// const Q_inv = math.inv(Q);
+// console.log('Q Inverse: ', Q_inv);
 
-const x_star_1 = math.multiply(Q_inv, r);
-console.log("Chunk 1: ", x_star_1);
+// const x_star_1 = math.multiply(Q_inv, r);
+// console.log("Chunk 1: ", x_star_1);
 
-const x_star_2 = math.multiply(Q_inv, e);
-console.log("Chunk 2: ", x_star_2);
+// const x_star_2 = math.multiply(Q_inv, e);
+// console.log("Chunk 2: ", x_star_2);
 
-// ---- Solve for Lambdas ---- //
-//  [ [a, b],       [ [(r_t * Q_inv * r),  (r_t * Q_inv * e)],
-//     [b, d] ] =>    [(r_t * Q_inv * e),  (e_t * Q_inv * e) ] ] 
-const a = math.multiply(r_t, Q_inv, r);
-const b = math.multiply(r_t, Q_inv, e);
-const d = math.multiply(e_t, Q_inv, e);
-const A = [[a, b],
-            [b, d]];
-console.log("Matrix A: ", A);
-const b_vec = math.matrix([.02, 1]);
-console.log(b_vec.size())
-const lambdas = math.lusolve(A, b_vec);
-console.log("Lambda Values: ", lambdas);
+// // ---- Solve for Lambdas ---- //
+// //  [ [a, b],       [ [(r_t * Q_inv * r),  (r_t * Q_inv * e)],
+// //     [b, d] ] =>    [(r_t * Q_inv * e),  (e_t * Q_inv * e) ] ] 
+// const a = math.multiply(r_t, Q_inv, r);
+// const b = math.multiply(r_t, Q_inv, e);
+// const d = math.multiply(e_t, Q_inv, e);
+// const A = [[a, b],
+//             [b, d]];
+// console.log("Matrix A: ", A);
+// const b_vec = math.matrix([.02, 1]);
+// console.log(b_vec.size())
+// const lambdas = math.lusolve(A, b_vec);
+// console.log("Lambda Values: ", lambdas);
 
 // ---- Substitute Lambdas to solve for x_star ----- //
-const new_chunk1 = x_star_1.map(function(x) {return x * lambdas[0]});
-const new_chunk2 = x_star_2.map(function(x) {return x * lambdas[1]});
-const x_star = math.add(new_chunk1, new_chunk2);
-console.log("Final Output Distribution: ", x_star);
+// const new_chunk1 = x_star_1.map(function(x) {return x * lambdas[0]});
+// const new_chunk2 = x_star_2.map(function(x) {return x * lambdas[1]});
+// const x_star = math.add(new_chunk1, new_chunk2);
+// console.log("Final Output Distribution: ", x_star);
 
 // ---------------------------- end ------------------------- //
 
@@ -328,40 +328,210 @@ app.get('/reset', (req, res) => {
 });
 
 // Optimization
-app.post('/optimization', ensureAuthenticated, (req, res) =>{
+app.get('/optimization', (req, res) => {
     res.render('pages/optimization');
-    const {
-        stock1,
-        stock2,
-        stock3,
-        budget,
-        req_return,
-        start,
-        end,
-        period
-    } = req.body;
+});
+
+function htmlDateToUnixTimestamp(htmlDate){
+    console.log(htmlDate);
+    var d = htmlDate + 'T00:00:00.000Z';
+    return new Date(d).valueOf()/1000;
+}
+
+function periodicReturns(prices){
+    const len = prices.length;
+    var returns = [];
+    var pr0, pr1, ret;
+    pr0 = prices[0].adjclose;
+    for(i = 1; i < prices.length; i++){
+        pr1 = prices[i].adjclose;
+        ret = (pr1 - pr0) / pr0;
+        ret = ret || 0;
+        returns.push(ret);
+        pr0 = pr1;
+    }
+    return returns; 
+}
+
+function optimize2(Q, r, alpha, budget){
+    const r_t = math.transpose(r);
+    const e = [1, 1, 1];
+    const B = [alpha, budget];
+    const e_t = math.transpose(e);
+    Q_inv = math.inv(Q);
+    console.log('Q Inverse: ', Q_inv);
+    const A = [math.transpose(r), math.transpose(e)]
+    console.log("matrix A: " , A);
+    // // ---- Solve for Lambdas ---- //
+    // //  [ [a, b],       [ [(r_t * Q_inv * r),  (r_t * Q_inv * e)],
+    // //     [b, d] ] =>    [(r_t * Q_inv * e),  (e_t * Q_inv * e) ] ] 
+    const a = math.multiply(r_t, Q_inv, r);
+    const b = math.multiply(r_t, Q_inv, e);
+    const d = math.multiply(e_t, Q_inv, e);
+    const H = [[a, b],
+                [b, d]];
+    console.log("Matrix H: ", H);
+    const H_inv = math.inv(H);
+    var lambdas = math.multiply(H_inv, B);
+
+    var ans = math.multiply(Q_inv, A, lambdas);
+    return ans;
+}
+
+function optimize(Q, r, alpha){
+    const r_t = math.transpose(r);
+    const e = [1, 1, 1];
+    const e_t = math.transpose(e);
+    Q_inv = math.inv(Q);
+    console.log('Q Inverse: ', Q_inv);
+
+    const x_star_1 = math.multiply(Q_inv, r);
+    console.log("Chunk 1: ", x_star_1);
+    const x_star_2 = math.multiply(Q_inv, e);
+    console.log("Chunk 2: ", x_star_2);
+
+    // // ---- Solve for Lambdas ---- //
+    // //  [ [a, b],       [ [(r_t * Q_inv * r),  (r_t * Q_inv * e)],
+    // //     [b, d] ] =>    [(r_t * Q_inv * e),  (e_t * Q_inv * e) ] ] 
+    const a = math.multiply(r_t, Q_inv, r);
+    const b = math.multiply(r_t, Q_inv, e);
+    const d = math.multiply(e_t, Q_inv, e);
+    const A = [[a, b],
+                [b, d]];
+    console.log("Matrix A: ", A);
+    // Default 0.02 requested return -- needs formatting
+    const b_vec = math.matrix([alpha, 1]);
+    const lambdas = math.lusolve(A, b_vec);
+    console.log("Lambda Values: ", lambdas);
     
-    var req = unirest("GET", 
-        "https://apidojo-yahoo-finance-v1.p.rapidapi.com/stock/v2/get-historical-data");
+    const new_chunk1 = x_star_1.map(function(x) {return x * lambdas[0]});
+    const new_chunk2 = x_star_2.map(function(x) {return x * lambdas[1]});
+    const x_star = math.add(new_chunk1, new_chunk2);
+    return x_star;
+}
+app.post('/calculator', (req, res, next) => {
+    //strings, has no error for whether not it is an acceptable stock
+    var stock1 = req.body.stock1;
+    var stock2 = req.body.stock2;
+    var stock3 = req.body.stock3;
+    //unix timestamps - good to go
+    var start = htmlDateToUnixTimestamp(req.body.start); 
+    var end = htmlDateToUnixTimestamp(req.body.end);
+    //html select element - string
+    var period = req.body.period;
+    //return turned from whole number between 0-100 into real percent
+    var req_return_unformatted = req.body.req_return;
+    var req_return = req_return_unformatted/100;
+    //budget shouldnt need to be changed. no option for cents or anything yet but im looking into it
+    var budget = req.body.budget;
 
-    req.query({
-        "frequency": period,
-        "filter": "history",
-        "period1": "1546448400",
-        "period2": "1562086800",
-        "symbol": stock1
-    });
-
-    req.headers({
-        "x-rapidapi-host": "apidojo-yahoo-finance-v1.p.rapidapi.com",
-        "x-rapidapi-key": "3a6c5f19f5msh7f6a6a8ab33137dp1ff5c3jsnedbc4cb3b72b"
-    });
-    req.end(function (res) {
-        if (res.error) throw new Error(res.error);
+    var stock1_returns;
+    var stock2_returns;
+    var stock3_returns;
+    var r_1, r_2, r_3, r;
     
-        console.log(res.body[0]);
-    });
+    unirest("GET", "https://apidojo-yahoo-finance-v1.p.rapidapi.com/stock/v2/get-historical-data")
+        .headers({
+            "x-rapidapi-host": "apidojo-yahoo-finance-v1.p.rapidapi.com",
+            "x-rapidapi-key": "3a6c5f19f5msh7f6a6a8ab33137dp1ff5c3jsnedbc4cb3b72b"
+        })
+        .query({
+            "frequency": period,
+            "filter": "history",
+            "period1": start,
+            "period2": end,
+            "symbol": stock1
+        }).end(function (res1) {
+            if (res1.error) throw new Error(res1.error);
+            //console.log(res.body);
+            console.log(res1.body.prices[0])
+            stock1_returns = res1.body.prices;
+            unirest("GET", "https://apidojo-yahoo-finance-v1.p.rapidapi.com/stock/v2/get-historical-data")
+                .headers({
+                    "x-rapidapi-host": "apidojo-yahoo-finance-v1.p.rapidapi.com",
+                    "x-rapidapi-key": "3a6c5f19f5msh7f6a6a8ab33137dp1ff5c3jsnedbc4cb3b72b"
+                })
+                .query({
+                    "frequency": period,
+                    "filter": "history",
+                    "period1": start,
+                    "period2": end,
+                    "symbol": stock2
+                }).end(function (res2) {
+                    if (res2.error) throw new Error(res2.error);
+                    //console.log(res.body);
+                    console.log(res2.body.prices[0])
+                    stock2_returns = res2.body.prices;
+                    unirest("GET", "https://apidojo-yahoo-finance-v1.p.rapidapi.com/stock/v2/get-historical-data")
+                        .headers({
+                            "x-rapidapi-host": "apidojo-yahoo-finance-v1.p.rapidapi.com",
+                            "x-rapidapi-key": "3a6c5f19f5msh7f6a6a8ab33137dp1ff5c3jsnedbc4cb3b72b"
+                        })
+                        .query({
+                            "frequency": period,
+                            "filter": "history",
+                            "period1": start,
+                            "period2": end,
+                            "symbol": stock3
+                        }).end(function (res3) {
+                            if (res3.error) throw new Error(res3.error);
+                            //console.log(res.body);
+                            console.log(res3.body.prices[0])
+                            stock3_returns = res3.body.prices;
+                            
+                            // Calculate expected returns vectors
+                            r_1 = periodicReturns(stock1_returns);
+                            r_2 = periodicReturns(stock2_returns);
+                            r_3 = periodicReturns(stock3_returns);
+                            
+                            // Make sure vectors are same length for covariance calculation
+                            const len = r_1.length;
+                            var delta;
+                            if(r_1.length != r_2.length){
+                                delta = r_1.length - r_2.length;
+                                if(delta < 0){
+                                    for(i = 0; i< delta; i++){
+                                        r_1.push(0);
+                                    }
+                                }
+                                else{
+                                    for(i = 0; i < delta; i++){
+                                        r_2.push(0);
+                                    }
+                                }
+                            }
+                            if(r_1.length != r_3.length){
+                                delta = r_1.length - r_3.length;
+                                if(delta < 0){
+                                    for(i = 0; i < delta; i++){
+                                        r_1.push(0);
+                                    }
+                                }else{
+                                    for( i = 0; i < delta; i++){
+                                        r_3.push(0);
+                                    }
+                                }
+                            }
 
+                            r = math.mean([r_1, r_2, r_3], 1);
+                            console.log("Mean Expected Return Vector (r): ", r);
+                            
+                            var mat = cov(r_1, r_2, r_3);
+                            console.log("Covariance Matrix: ", mat);
+                            
+                            const ans = optimize(mat, r, req_return);
+                            //const ans = optimize2(mat, r, req_return, budget);
+                            console.log("Final Recommended Distribution: ", ans);
+
+                            const ret = math.dot(r, ans)
+                            console.log("Expected Return: ", ret * 100);
+
+                            const risk = math.multiply(math.transpose(ans), mat, ans);
+                            console.log("Expected Risk: ", risk*100);
+                            res.redirect('/home');
+                        }); 
+                });
+        });
 });
 
 
