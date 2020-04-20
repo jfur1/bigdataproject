@@ -1,3 +1,103 @@
 <h1 class="mt-4">Dashboard</h1>
 <p class="lead mb-3">Welcome <%= name %></p>
+<a href="/profile" class="btn btn-secondary">Profile</a>
+
 <a href="/logout" class="btn btn-secondary">Logout</a>
+
+<style>
+    table, th, td {
+      border: 1px solid black;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 5px;
+      text-align: left;
+    }
+</style>
+
+<div class="container">
+    <canvas id="myChart"></canvas>
+</div>
+
+<table style="width:100%">
+
+    <caption><%= typeof name1 != 'undefined' ? 'Optimal Distribution' 
+                                            : 'No Portfolio to Display' %></caption>
+    <tr>
+      <th>Asset</th>
+      <th>Budget Allocation</th>
+    </tr>
+    <tr>
+      <td><%= typeof name1 != 'undefined' ? name1 : '' %></td>
+      <td><%= typeof x1 != 'undefined' ? x1 : ''%>%</td>
+    </tr>
+    <tr>
+        <td><%= typeof name2 != 'undefined' ? name2 : '' %></td>
+        <td><%= typeof x2 != 'undefined' ? x2 : ''%>%</td>
+    </tr>
+    <tr>
+        <td><%= typeof name3 != 'undefined' ? name3 : '' %></td>
+        <td><%= typeof x3 != 'undefined' ? x3 : ''%>%</td>
+      </tr>
+  </table>
+  <h4>Expected Return: <%= exp_ret != 'undefined' ? exp_ret : '' %> %</h4>
+  <h4>Expected Risk: <%= volatility != 'undefined' ? volatility : '' %> %</h4>
+</br>
+
+<div class="slidecontainer">
+    <input type="range" min="0" max="100" value="<%= typeof x1 != 'undefined' ? x1 : 33%>" class="slider" id="x_1">
+    <p>Investment 1: <span id="value1"></span>%</p>
+</div>
+<div class="slidecontainer">
+    <input type="range" min="0" max="100" value="<%= typeof x2 != 'undefined' ? x2 : 33%>" class="slider" id="x_2">
+    <p>Investment 2: <span id="value2"></span>%</p>
+</div>
+<div class="slidecontainer">
+    <input type="range" min="0" max="100" value="<%= typeof x3 != 'undefined' ? x3 : 34%>" class="slider" id="x_3">
+    <p>Investment 3: <span id="value3"></span>%</p>
+</div>
+
+<script>
+    var slider1 = document.getElementById("x_1");
+    var output1 = document.getElementById("value1");
+    output1.innerHTML = slider1.value;
+
+    var slider2 = document.getElementById("x_2");
+    var output2 = document.getElementById("value2");
+    output2.innerHTML = slider2.value;
+
+    var slider3 = document.getElementById("x_3");
+    var output3 = document.getElementById("value3");
+    output3.innerHTML = slider3.value;
+    
+    slider1.oninput = function() {
+      output1.innerHTML = this.value;
+      format(1);
+    }    
+    slider2.oninput = function() {
+      output2.innerHTML = this.value;
+      format(2);
+    }
+    slider3.oninput = function() {
+      output3.innerHTML = this.value;
+      format(3);
+    }
+
+    function format(sliderNum){
+        if(sliderNum == 1){
+            output3.innerHTML = 100 - slider1.value - slider2.value;
+            slider3.value = 100 - slider1.value - slider2.value;
+        } else if(sliderNum == 2){
+            output3.innerHTML = 100 - slider1.value - slider2.value;
+            slider3.value = 100 - slider1.value - slider2.value;
+        }else{
+            output1.innerHTML = 100 - slider2.value - slider3.value;
+            slider1.value = 100 - slider2.value - slider3.value;
+        }
+    }
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.js"></script>
+<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+<script src="./myChart.js"></script>
+

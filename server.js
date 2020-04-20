@@ -11,53 +11,12 @@ var unirest = require("unirest");
 const math = require('mathjs');
 
 const { ensureAuthenticated, forwardAuthenticated } = require('./resources/auth');
+const {optimize, periodicReturns, htmlDateToUnixTimestamp} = require('./resources/optimizer');
 var Portfolio = require('./resources/optimizer');
 
 
 const app = express();
 
-// let portfolio = new Portfolio('aapl', 'msft', 'nike', 1546448400, 1562086800, '1d', 0.02, 1000);
-// console.log(portfolio.period)
-
-// ------- Testing Area --------- //
-// const alpha = 0.02;  // Requested return percentage
-// const r = [0.024, 0.018, 0.009];
-// const r_t = math.transpose(r);
-// const e = [1, 1, 1];
-// const e_t = math.transpose(e);
-// const Q = [ [.0033, .00163, -.0007524], 
-//             [.00163, .00183, -.000563], 
-//             [-.0007524, -.000563, .001976] ];
-// const Q_inv = math.inv(Q);
-// console.log('Q Inverse: ', Q_inv);
-
-// const x_star_1 = math.multiply(Q_inv, r);
-// console.log("Chunk 1: ", x_star_1);
-
-// const x_star_2 = math.multiply(Q_inv, e);
-// console.log("Chunk 2: ", x_star_2);
-
-// // ---- Solve for Lambdas ---- //
-// //  [ [a, b],       [ [(r_t * Q_inv * r),  (r_t * Q_inv * e)],
-// //     [b, d] ] =>    [(r_t * Q_inv * e),  (e_t * Q_inv * e) ] ] 
-// const a = math.multiply(r_t, Q_inv, r);
-// const b = math.multiply(r_t, Q_inv, e);
-// const d = math.multiply(e_t, Q_inv, e);
-// const A = [[a, b],
-//             [b, d]];
-// console.log("Matrix A: ", A);
-// const b_vec = math.matrix([.02, 1]);
-// console.log(b_vec.size())
-// const lambdas = math.lusolve(A, b_vec);
-// console.log("Lambda Values: ", lambdas);
-
-// ---- Substitute Lambdas to solve for x_star ----- //
-// const new_chunk1 = x_star_1.map(function(x) {return x * lambdas[0]});
-// const new_chunk2 = x_star_2.map(function(x) {return x * lambdas[1]});
-// const x_star = math.add(new_chunk1, new_chunk2);
-// console.log("Final Output Distribution: ", x_star);
-
-// ---------------------------- end ------------------------- //
 
 // Passport Config
 passport.use(
@@ -298,7 +257,7 @@ app.post('/login', (req, res, next) => {
                 });
         } else {
             passport.authenticate('local', {
-                successRedirect: '/dashboard',
+                successRedirect: '/profile',
                 failureRedirect: '/login',
                 failureFlash: true
             })(req, res, next);
@@ -316,9 +275,29 @@ app.get('/logout', (req, res) => {
     res.redirect('/login');
 });
 
+function renderChart(data, labels) {
+    var ctx = document.getElementById("myChart").getContext('2d');
+    var myChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Efficient Frontier',
+                data: data,
+            }]
+        },
+    });
+}
+
 // User Dashboard -- Protected Access via Passport-Sessions()
 app.get('/dashboard', ensureAuthenticated, (req, res) => {
     res.render('pages/dashboard', {
+        name: req.user.user_first_name
+    });
+});
+
+app.get('/profile', ensureAuthenticated, (req, res) => {
+    res.render('pages/profile', {
         name: req.user.user_first_name
     });
 });
@@ -332,59 +311,12 @@ app.get('/optimization', (req, res) => {
     res.render('pages/optimization');
 });
 
-function htmlDateToUnixTimestamp(htmlDate){
-    console.log(htmlDate);
-    var d = htmlDate + 'T00:00:00.000Z';
-    return new Date(d).valueOf()/1000;
-}
+app.get('/calculator', ensureAuthenticated, (req, res)=>{
+    res.redirect('/optimization');
+})
 
-function periodicReturns(prices){
-
-    var returns = [];
-    var pr0, pr1, ret;
-    pr0 = prices[0].adjclose;
-    for(i = 1; i < prices.length; i++){
-        pr1 = prices[i].adjclose;
-        ret = (pr1 - pr0) / pr0;
-        ret = ret || 0;
-        returns.push(ret);
-        pr0 = pr1;
-    }
-    return returns; 
-}
-
-function optimize(Q, r, alpha){
-    const r_t = math.transpose(r);
-    const e = [1, 1, 1];
-    const e_t = math.transpose(e);
-    Q_inv = math.inv(Q);
-    //console.log('Q Inverse: ', Q_inv);
-
-    const x_star_1 = math.multiply(Q_inv, r);
-    //console.log("Chunk 1: ", x_star_1);
-    const x_star_2 = math.multiply(Q_inv, e);
-    //console.log("Chunk 2: ", x_star_2);
-
-    // // ---- Solve for Lambdas ---- //
-    // //  [ [a, b],       [ [(r_t * Q_inv * r),  (r_t * Q_inv * e)],
-    // //     [b, d] ] =>    [(r_t * Q_inv * e),  (e_t * Q_inv * e) ] ] 
-    const a = math.multiply(r_t, Q_inv, r);
-    const b = math.multiply(r_t, Q_inv, e);
-    const d = math.multiply(e_t, Q_inv, e);
-    const A = [[a, b],
-                [b, d]];
-   // console.log("Matrix A: ", A);
-    const b_vec = math.matrix([alpha, 1]);
-    const lambdas = math.lusolve(A, b_vec);
-    //console.log("Lambda Values: ", lambdas);
+app.post('/calculator', ensureAuthenticated, (req, res, next) => {
     
-    const new_chunk1 = x_star_1.map(function(x) {return x * lambdas[0]});
-    const new_chunk2 = x_star_2.map(function(x) {return x * lambdas[1]});
-    const x_star = math.add(new_chunk1, new_chunk2);
-    
-    return x_star;
-}
-app.post('/calculator', (req, res, next) => {
     //strings, has no error for whether not it is an acceptable stock
     var stock1 = req.body.stock1;
     var stock2 = req.body.stock2;
@@ -399,7 +331,7 @@ app.post('/calculator', (req, res, next) => {
     var req_return = req_return_unformatted/100;
     //budget shouldnt need to be changed. no option for cents or anything yet but im looking into it
     var budget = req.body.budget;
-
+    // Initialize return vectors
     var stock1_returns;
     var stock2_returns;
     var stock3_returns;
@@ -450,8 +382,6 @@ app.post('/calculator', (req, res, next) => {
                             "symbol": stock3
                         }).end(function (res3) {
                             if (res3.error) throw new Error(res3.error);
-                            //console.log(res.body);
-                            //console.log(res3.body.prices[0])
                             stock3_returns = res3.body.prices;
                             
                             // Calculate expected returns vectors
@@ -465,7 +395,7 @@ app.post('/calculator', (req, res, next) => {
                             if(r_1.length != r_2.length){
                                 delta = r_1.length - r_2.length;
                                 if(delta < 0){
-                                    for(i = 0; i< delta; i++){
+                                    for(i = 0; i< math.abs(delta); i++){
                                         r_1.push(0);
                                     }
                                 }
@@ -478,7 +408,7 @@ app.post('/calculator', (req, res, next) => {
                             if(r_1.length != r_3.length){
                                 delta = r_1.length - r_3.length;
                                 if(delta < 0){
-                                    for(i = 0; i < delta; i++){
+                                    for(i = 0; i < math.abs(delta); i++){
                                         r_1.push(0);
                                     }
                                 }else{
@@ -492,6 +422,9 @@ app.post('/calculator', (req, res, next) => {
                             r = r.map(function(x) {return x * 100});
                             console.log("Mean Expected Return Vector (r): ", math.round(r,2), "%");
                             
+                            console.log("R1 Length: ", r_1.length);
+                            console.log("R2 Length: ", r_2.length);
+                            console.log("R3 Length: ", r_3.length);
                             var mat = cov(r_1, r_2, r_3);
                             //console.log("Covariance Matrix: ", mat);
                             
@@ -503,9 +436,24 @@ app.post('/calculator', (req, res, next) => {
                             console.log("Expected Return: ", math.round(ret,2), "%");
 
                             var risk = math.multiply(math.transpose(ans), mat, ans);
-                            risk = risk**2
+                            risk = risk**2;
                             console.log("Expected Risk: ", math.round(risk,2), "%");
-                            res.redirect('/home');
+
+                            var std_dev = math.sqrt(math.diag(mat));
+
+                            res.render('pages/dashboard', 
+                                {name: req.user.user_first_name,
+                                    name1: stock1,
+                                    name2: stock2,
+                                    name3: stock3,
+                                    volatility: math.round(risk,2),
+                                    exp_ret: math.round(ret,2),
+                                x1 : math.round(ans[0], 0),
+                                x2: math.round(ans[1], 0),
+                                x3: math.round(ans[2], 0),
+                                stdDev: std_dev,
+                                returns: r
+                                });
                         }); 
                 });
         });
