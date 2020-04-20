@@ -339,7 +339,7 @@ function htmlDateToUnixTimestamp(htmlDate){
 }
 
 function periodicReturns(prices){
-    const len = prices.length;
+
     var returns = [];
     var pr0, pr1, ret;
     pr0 = prices[0].adjclose;
@@ -353,42 +353,17 @@ function periodicReturns(prices){
     return returns; 
 }
 
-function optimize2(Q, r, alpha, budget){
-    const r_t = math.transpose(r);
-    const e = [1, 1, 1];
-    const B = [alpha, budget];
-    const e_t = math.transpose(e);
-    Q_inv = math.inv(Q);
-    console.log('Q Inverse: ', Q_inv);
-    const A = [math.transpose(r), math.transpose(e)]
-    console.log("matrix A: " , A);
-    // // ---- Solve for Lambdas ---- //
-    // //  [ [a, b],       [ [(r_t * Q_inv * r),  (r_t * Q_inv * e)],
-    // //     [b, d] ] =>    [(r_t * Q_inv * e),  (e_t * Q_inv * e) ] ] 
-    const a = math.multiply(r_t, Q_inv, r);
-    const b = math.multiply(r_t, Q_inv, e);
-    const d = math.multiply(e_t, Q_inv, e);
-    const H = [[a, b],
-                [b, d]];
-    console.log("Matrix H: ", H);
-    const H_inv = math.inv(H);
-    var lambdas = math.multiply(H_inv, B);
-
-    var ans = math.multiply(Q_inv, A, lambdas);
-    return ans;
-}
-
 function optimize(Q, r, alpha){
     const r_t = math.transpose(r);
     const e = [1, 1, 1];
     const e_t = math.transpose(e);
     Q_inv = math.inv(Q);
-    console.log('Q Inverse: ', Q_inv);
+    //console.log('Q Inverse: ', Q_inv);
 
     const x_star_1 = math.multiply(Q_inv, r);
-    console.log("Chunk 1: ", x_star_1);
+    //console.log("Chunk 1: ", x_star_1);
     const x_star_2 = math.multiply(Q_inv, e);
-    console.log("Chunk 2: ", x_star_2);
+    //console.log("Chunk 2: ", x_star_2);
 
     // // ---- Solve for Lambdas ---- //
     // //  [ [a, b],       [ [(r_t * Q_inv * r),  (r_t * Q_inv * e)],
@@ -398,15 +373,15 @@ function optimize(Q, r, alpha){
     const d = math.multiply(e_t, Q_inv, e);
     const A = [[a, b],
                 [b, d]];
-    console.log("Matrix A: ", A);
-    // Default 0.02 requested return -- needs formatting
+   // console.log("Matrix A: ", A);
     const b_vec = math.matrix([alpha, 1]);
     const lambdas = math.lusolve(A, b_vec);
-    console.log("Lambda Values: ", lambdas);
+    //console.log("Lambda Values: ", lambdas);
     
     const new_chunk1 = x_star_1.map(function(x) {return x * lambdas[0]});
     const new_chunk2 = x_star_2.map(function(x) {return x * lambdas[1]});
     const x_star = math.add(new_chunk1, new_chunk2);
+    
     return x_star;
 }
 app.post('/calculator', (req, res, next) => {
@@ -444,7 +419,7 @@ app.post('/calculator', (req, res, next) => {
         }).end(function (res1) {
             if (res1.error) throw new Error(res1.error);
             //console.log(res.body);
-            console.log(res1.body.prices[0])
+            //console.log(res1.body.prices[0])
             stock1_returns = res1.body.prices;
             unirest("GET", "https://apidojo-yahoo-finance-v1.p.rapidapi.com/stock/v2/get-historical-data")
                 .headers({
@@ -460,7 +435,7 @@ app.post('/calculator', (req, res, next) => {
                 }).end(function (res2) {
                     if (res2.error) throw new Error(res2.error);
                     //console.log(res.body);
-                    console.log(res2.body.prices[0])
+                    //console.log(res2.body.prices[0])
                     stock2_returns = res2.body.prices;
                     unirest("GET", "https://apidojo-yahoo-finance-v1.p.rapidapi.com/stock/v2/get-historical-data")
                         .headers({
@@ -476,7 +451,7 @@ app.post('/calculator', (req, res, next) => {
                         }).end(function (res3) {
                             if (res3.error) throw new Error(res3.error);
                             //console.log(res.body);
-                            console.log(res3.body.prices[0])
+                            //console.log(res3.body.prices[0])
                             stock3_returns = res3.body.prices;
                             
                             // Calculate expected returns vectors
@@ -514,20 +489,22 @@ app.post('/calculator', (req, res, next) => {
                             }
 
                             r = math.mean([r_1, r_2, r_3], 1);
-                            console.log("Mean Expected Return Vector (r): ", r);
+                            r = r.map(function(x) {return x * 100});
+                            console.log("Mean Expected Return Vector (r): ", math.round(r,2), "%");
                             
                             var mat = cov(r_1, r_2, r_3);
-                            console.log("Covariance Matrix: ", mat);
+                            //console.log("Covariance Matrix: ", mat);
                             
-                            const ans = optimize(mat, r, req_return);
-                            //const ans = optimize2(mat, r, req_return, budget);
-                            console.log("Final Recommended Distribution: ", ans);
+                            var ans = optimize(mat, r, req_return);
+                            ans = ans.map(function(x) {return x * 100});
+                            console.log("Final Recommended Distribution: ", math.round(ans,2), "%");
 
-                            const ret = math.dot(r, ans)
-                            console.log("Expected Return: ", ret * 100);
+                            var ret = math.dot(r, ans)
+                            console.log("Expected Return: ", math.round(ret,2), "%");
 
-                            const risk = math.multiply(math.transpose(ans), mat, ans);
-                            console.log("Expected Risk: ", risk*100);
+                            var risk = math.multiply(math.transpose(ans), mat, ans);
+                            risk = risk**2
+                            console.log("Expected Risk: ", math.round(risk,2), "%");
                             res.redirect('/home');
                         }); 
                 });
