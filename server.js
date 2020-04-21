@@ -321,7 +321,8 @@ app.post('/calculator', ensureAuthenticated, (req, res, next) => {
     var stock1 = req.body.stock1;
     var stock2 = req.body.stock2;
     var stock3 = req.body.stock3;
-    var unformattedStart = req.body.start;
+
+    var startString = req.body.start;
     //unix timestamps
     var start = htmlDateToUnixTimestamp(req.body.start); 
     var end = htmlDateToUnixTimestamp(req.body.end);
@@ -430,7 +431,7 @@ app.post('/calculator', ensureAuthenticated, (req, res, next) => {
                             console.log("Expected Risk: ", math.round(risk,2), "%");
 
                             //var std_dev = math.sqrt(math.diag(mat));
-                            //start = start.toLocaleString();
+
                             res.render('pages/dashboard', 
                                 {name: req.user.user_first_name,
                                     name1: stock1, name2: stock2, name3: stock3,
@@ -440,7 +441,7 @@ app.post('/calculator', ensureAuthenticated, (req, res, next) => {
                                     x2: math.round(ans[1], 0),
                                     x3: math.round(ans[2], 0),
                                     prices1: p1, prices2: p2, prices3: p3,
-                                    start_date: start, end_date: end, frequency: period
+                                    start_date: startString, end_date: end, frequency: period
                                 });
                         }); 
                 });
