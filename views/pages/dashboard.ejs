@@ -14,10 +14,17 @@
       text-align: left;
     }
 </style>
-
-<div class="container">
-    <canvas id="myChart"></canvas>
-</div>
+<br>
+<!--Test that all data was passed correctly-->
+<h5>The price of one
+    <%= typeof name1 != 'undefined' ? name1 : '' %>
+    stock costed
+    <%= typeof prices1 != 'undefined' ? prices1[0] : ''%>
+    on
+    <% typeof start_date != 'undefined' ? start_date : '' %>
+    !
+</h5>
+<br>
 
 <table style="width:100%">
 
@@ -40,11 +47,11 @@
         <td><%= typeof x3 != 'undefined' ? x3 : ''%>%</td>
       </tr>
   </table>
-  <h4>Expected Return: <%= exp_ret != 'undefined' ? exp_ret : '' %> %</h4>
-  <h4>Expected Risk: <%= volatility != 'undefined' ? volatility : '' %> %</h4>
+  <h5>Expected Return: <%= exp_ret != 'undefined' ? exp_ret : '' %> %</h5>
+  <h5>Expected Risk: <%= volatility != 'undefined' ? volatility : '' %> %</h5->
 </br>
 
-<div class="slidecontainer">
+<!-- <div class="slidecontainer">
     <input type="range" min="0" max="100" value="<%= typeof x1 != 'undefined' ? x1 : 33%>" class="slider" id="x_1">
     <p>Investment 1: <span id="value1"></span>%</p>
 </div>
@@ -55,9 +62,10 @@
 <div class="slidecontainer">
     <input type="range" min="0" max="100" value="<%= typeof x3 != 'undefined' ? x3 : 34%>" class="slider" id="x_3">
     <p>Investment 3: <span id="value3"></span>%</p>
-</div>
+</div> -->
 
-<script>
+<!-- <script>
+    const math = require('mathjs');
     var slider1 = document.getElementById("x_1");
     var output1 = document.getElementById("value1");
     output1.innerHTML = slider1.value;
@@ -87,6 +95,7 @@
         if(sliderNum == 1){
             output3.innerHTML = 100 - slider1.value - slider2.value;
             slider3.value = 100 - slider1.value - slider2.value;
+            //replot()
         } else if(sliderNum == 2){
             output3.innerHTML = 100 - slider1.value - slider2.value;
             slider3.value = 100 - slider1.value - slider2.value;
@@ -94,8 +103,9 @@
             output1.innerHTML = 100 - slider2.value - slider3.value;
             slider1.value = 100 - slider2.value - slider3.value;
         }
+
     }
-</script>
+</script> -->
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.js"></script>
 <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>

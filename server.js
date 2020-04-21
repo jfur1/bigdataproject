@@ -11,7 +11,7 @@ var unirest = require("unirest");
 const math = require('mathjs');
 
 const { ensureAuthenticated, forwardAuthenticated } = require('./resources/auth');
-const {optimize, periodicReturns, htmlDateToUnixTimestamp} = require('./resources/optimizer');
+const {optimize, periodicReturns, htmlDateToUnixTimestamp, normalizeVectorLength, periodicPrices} = require('./resources/optimizer');
 var Portfolio = require('./resources/optimizer');
 
 
@@ -321,7 +321,8 @@ app.post('/calculator', ensureAuthenticated, (req, res, next) => {
     var stock1 = req.body.stock1;
     var stock2 = req.body.stock2;
     var stock3 = req.body.stock3;
-    //unix timestamps - good to go
+    var unformattedStart = req.body.start;
+    //unix timestamps
     var start = htmlDateToUnixTimestamp(req.body.start); 
     var end = htmlDateToUnixTimestamp(req.body.end);
     //html select element - string
@@ -336,6 +337,7 @@ app.post('/calculator', ensureAuthenticated, (req, res, next) => {
     var stock2_returns;
     var stock3_returns;
     var r_1, r_2, r_3, r;
+    var p1, p2, p3;
     
     unirest("GET", "https://apidojo-yahoo-finance-v1.p.rapidapi.com/stock/v2/get-historical-data")
         .headers({
@@ -382,77 +384,63 @@ app.post('/calculator', ensureAuthenticated, (req, res, next) => {
                             "symbol": stock3
                         }).end(function (res3) {
                             if (res3.error) throw new Error(res3.error);
+
                             stock3_returns = res3.body.prices;
                             
                             // Calculate expected returns vectors
                             r_1 = periodicReturns(stock1_returns);
                             r_2 = periodicReturns(stock2_returns);
                             r_3 = periodicReturns(stock3_returns);
-                            
-                            // Make sure vectors are same length for covariance calculation
-                            const len = r_1.length;
-                            var delta;
-                            if(r_1.length != r_2.length){
-                                delta = r_1.length - r_2.length;
-                                if(delta < 0){
-                                    for(i = 0; i< math.abs(delta); i++){
-                                        r_1.push(0);
-                                    }
-                                }
-                                else{
-                                    for(i = 0; i < delta; i++){
-                                        r_2.push(0);
-                                    }
-                                }
-                            }
-                            if(r_1.length != r_3.length){
-                                delta = r_1.length - r_3.length;
-                                if(delta < 0){
-                                    for(i = 0; i < math.abs(delta); i++){
-                                        r_1.push(0);
-                                    }
-                                }else{
-                                    for( i = 0; i < delta; i++){
-                                        r_3.push(0);
-                                    }
-                                }
-                            }
 
+                            // Get periodic prices
+                            p1 = periodicPrices(stock1_returns);
+                            p2 = periodicPrices(stock2_returns);
+                            p3 = periodicPrices(stock3_returns);
+
+                            // Make sure vectors are same length for covariance calculation
+                            var r1r2 = normalizeVectorLength(r_1, r_2);
+                            var r1r3 = normalizeVectorLength(r_1, r_3);
+                            r_1 = r1r2[0];
+                            r_2 = r1r2[1];
+                            r_3 = r1r3[1];
+
+                            // Calculate r_tilda -- the mean returns for each stock
                             r = math.mean([r_1, r_2, r_3], 1);
                             r = r.map(function(x) {return x * 100});
                             console.log("Mean Expected Return Vector (r): ", math.round(r,2), "%");
                             
-                            console.log("R1 Length: ", r_1.length);
-                            console.log("R2 Length: ", r_2.length);
-                            console.log("R3 Length: ", r_3.length);
+                            // console.log("R1 Length: ", r_1.length);
+                            // console.log("R2 Length: ", r_2.length);
+                            // console.log("R3 Length: ", r_3.length);
                             var mat = cov(r_1, r_2, r_3);
                             //console.log("Covariance Matrix: ", mat);
                             
+                            // Solve for optimal asset allocation distribution
                             var ans = optimize(mat, r, req_return);
                             ans = ans.map(function(x) {return x * 100});
                             console.log("Final Recommended Distribution: ", math.round(ans,2), "%");
 
+                            // Return = return_i * allocation_i
                             var ret = math.dot(r, ans)
                             console.log("Expected Return: ", math.round(ret,2), "%");
 
+                            // Standard Deviation '=' Risk
                             var risk = math.multiply(math.transpose(ans), mat, ans);
                             risk = risk**2;
                             console.log("Expected Risk: ", math.round(risk,2), "%");
 
-                            var std_dev = math.sqrt(math.diag(mat));
-
+                            //var std_dev = math.sqrt(math.diag(mat));
+                            //start = start.toLocaleString();
                             res.render('pages/dashboard', 
                                 {name: req.user.user_first_name,
-                                    name1: stock1,
-                                    name2: stock2,
-                                    name3: stock3,
+                                    name1: stock1, name2: stock2, name3: stock3,
                                     volatility: math.round(risk,2),
                                     exp_ret: math.round(ret,2),
-                                x1 : math.round(ans[0], 0),
-                                x2: math.round(ans[1], 0),
-                                x3: math.round(ans[2], 0),
-                                stdDev: std_dev,
-                                returns: r
+                                    x1 : math.round(ans[0], 0),
+                                    x2: math.round(ans[1], 0),
+                                    x3: math.round(ans[2], 0),
+                                    prices1: p1, prices2: p2, prices3: p3,
+                                    start_date: start, end_date: end, frequency: period
                                 });
                         }); 
                 });

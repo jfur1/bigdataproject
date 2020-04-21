@@ -51,5 +51,44 @@ module.exports = {
         //console.log(htmlDate);
         var d = htmlDate + 'T00:00:00.000Z';
         return new Date(d).valueOf()/1000;
+    },
+
+    periodicPrices: function(price_data){
+        var prices = [];
+        for(i = 0; i < price_data.length; i++){
+            var price = price_data[i].adjclose;
+            (typeof(price) != 'undefined') ? prices.push(price) : '';
+
+        }
+        return prices;
+    },
+
+    normalizeVectorLength: function(r_1, r_i){
+        if(r_1.length != r_i.length){
+            var delta = r_1.length - r_i.length;
+            if(delta < 0){
+                for(i = 0; i< math.abs(delta); i++){
+                    r_1.push(0);
+                }
+            }
+            else{
+                for(i = 0; i < delta; i++){
+                    r_i.push(0);
+                }
+            }
+        }
+        if(r_1.length != r_i.length){
+            delta = r_1.length - r_i.length;
+            if(delta < 0){
+                for(i = 0; i < math.abs(delta); i++){
+                    r_1.push(0);
+                }
+            }else{
+                for( i = 0; i < delta; i++){
+                    r_i.push(0);
+                }
+            }
+        }
+        return [r_1, r_i];
     }
 };
