@@ -33,11 +33,11 @@ module.exports = {
     },
 
     periodicReturns: function(prices){
-
         var returns = [];
         var pr0, pr1, ret;
-        pr0 = prices[0].adjclose;
-        for(i = 1; i < prices.length; i++){
+        var len = prices.length - 1;
+        pr0 = prices[len].adjclose;
+        for(i = len-1; i > 0; i--){
             pr1 = prices[i].adjclose;
             ret = (pr1 - pr0) / pr0;
             ret = ret || 0;
@@ -58,7 +58,6 @@ module.exports = {
         for(i = 0; i < price_data.length; i++){
             var price = price_data[i].adjclose;
             (typeof(price) != 'undefined') ? prices.push(price) : '';
-
         }
         return prices;
     },
@@ -68,12 +67,12 @@ module.exports = {
             var delta = r_1.length - r_i.length;
             if(delta < 0){
                 for(i = 0; i< math.abs(delta); i++){
-                    r_1.push(0);
+                    r_1.push(1);
                 }
             }
             else{
                 for(i = 0; i < delta; i++){
-                    r_i.push(0);
+                    r_i.push(1);
                 }
             }
         }
@@ -81,11 +80,11 @@ module.exports = {
             delta = r_1.length - r_i.length;
             if(delta < 0){
                 for(i = 0; i < math.abs(delta); i++){
-                    r_1.push(0);
+                    r_1.push(1);
                 }
             }else{
                 for( i = 0; i < delta; i++){
-                    r_i.push(0);
+                    r_i.push(1);
                 }
             }
         }

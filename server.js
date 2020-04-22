@@ -275,20 +275,6 @@ app.get('/logout', (req, res) => {
     res.redirect('/login');
 });
 
-function renderChart(data, labels) {
-    var ctx = document.getElementById("myChart").getContext('2d');
-    var myChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Efficient Frontier',
-                data: data,
-            }]
-        },
-    });
-}
-
 // User Dashboard -- Protected Access via Passport-Sessions()
 app.get('/dashboard', ensureAuthenticated, (req, res) => {
     res.render('pages/dashboard', {
@@ -323,6 +309,7 @@ app.post('/calculator', ensureAuthenticated, (req, res, next) => {
     var stock3 = req.body.stock3;
 
     var startString = req.body.start;
+    var endString = req.body.end;
     //unix timestamps
     var start = htmlDateToUnixTimestamp(req.body.start); 
     var end = htmlDateToUnixTimestamp(req.body.end);
@@ -441,7 +428,7 @@ app.post('/calculator', ensureAuthenticated, (req, res, next) => {
                                     x2: math.round(ans[1], 0),
                                     x3: math.round(ans[2], 0),
                                     prices1: p1, prices2: p2, prices3: p3,
-                                    start_date: startString, end_date: end, frequency: period
+                                    start_date: startString, end_date: endString, frequency: period
                                 });
                         }); 
                 });
