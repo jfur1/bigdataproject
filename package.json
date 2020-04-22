@@ -29,5 +29,8 @@
     "pg-promise": "^10.4.4",
     "sessions": "0.0.2-7",
     "unirest": "^0.6.0"
+  },
+  "devDependencies": {
+    "dotenv": "^8.2.0"
   }
 }
