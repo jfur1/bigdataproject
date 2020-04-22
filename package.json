@@ -1,11 +1,10 @@
 {
-  "name": "big_data_project",
+  "name": "bigdataproject",
   "version": "1.0.0",
-  "description": "Portfolio Optimization",
-  "main": "server.js",
+  "description": "Biggest Data",
+  "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",

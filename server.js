@@ -242,7 +242,6 @@ app.get('/login', (req, res) => {
     });
 });
 
-// Login Handler
 app.post('/login', (req, res, next) => {
     const { email } = req.body;
     let errors = [];
@@ -261,6 +260,7 @@ app.post('/login', (req, res, next) => {
                 failureRedirect: '/login',
                 failureFlash: true
             })(req, res, next);
+
         }
     })
     .catch(err => {
@@ -282,6 +282,7 @@ app.get('/dashboard', ensureAuthenticated, (req, res) => {
     });
 });
 
+
 app.get('/profile', ensureAuthenticated, (req, res) => {
     res.render('pages/profile', {
         name: req.user.user_first_name
@@ -289,8 +290,11 @@ app.get('/profile', ensureAuthenticated, (req, res) => {
 });
 
 app.get('/reset', (req, res) => {
-    res.render('pages/reset');
+    res.render('pages/reset', {
+        my_title: 'Reset Page'
+    });
 });
+
 
 // Optimization
 app.get('/optimization', (req, res) => {
