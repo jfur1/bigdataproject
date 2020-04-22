@@ -1,0 +1,103 @@
+
+<div class="row mt-5">
+    <div class="col-md-6 m-auto">
+      <div class="card card-body">
+        <h1 class="text-center mb-3">
+          Calculate Portfolio
+        </h1>
+        <form action="/calculator" method="POST">
+          <div class="form-group">
+            <label for="stock1">Stock 1</label>
+            <input
+              type="name"
+              id="stock1"
+              name="stock1"
+              class="form-control"
+              placeholder="Enter Stock 1"
+              value="<%= typeof stock1 != 'undefined' ? stock1 : '' %>"
+            />
+          </div>
+          <div class="form-group">
+            <label for="stock2">Stock 2</label>
+            <input
+              type="name"
+              id="stock2"
+              name="stock2"
+              class="form-control"
+              placeholder="Enter Stock 2"
+              value="<%= typeof stock2 != 'undefined' ? stock2 : '' %>"
+            />
+          </div>
+          <div class="form-group">
+            <label for="stock3">Stock 3</label>
+            <input
+              type="name"
+              id="stock3"
+              name="stock3"
+              class="form-control"
+              placeholder="Enter Stock 3"
+              value="<%= typeof stock3 != 'undefined' ? stock3 : '' %>"
+            />
+          </div>
+          <div class="form-group">
+            <label for="budget">Total Funds (positive integer)</label>
+            <input
+              type="number" min="1"
+              id="budget"
+              name="budget"
+              class="form-control"
+              placeholder="Enter Total Funds"
+              value="<%= typeof budget != 'undefined' ? budget : '' %>"
+            />
+          </div>
+          <div class="form-group">
+            <label for="req_return">Expected Return (positive integer between 0 and 100)</label>
+            <input
+              type="number" min="0" max="100"
+              id="req_return"
+              name="req_return"
+              class="form-control"
+              placeholder="Enter Return"
+              value="<%= typeof req_return != 'undefined' ? req_return : '' %>"
+            />
+          </div>
+          <div class="form-group">
+            <label for="password2">Start Date</label>
+            <input
+              type="date"
+              id="start"
+              name="start"
+              class="form-control"
+              placeholder="Enter Start Date"
+              value="<%= typeof start != 'undefined' ? start : '' %>"
+            />
+          </div>
+          <div class="form-group">
+            <label for="end">End Date</label>
+            <input
+              type="date"
+              id="end"
+              name="end"
+              class="form-control"
+              placeholder="Enter End Date"
+              value="<%= typeof end != 'undefined' ? end : '' %>"
+            />
+          </div>
+          <div class="form-group">
+            <label for="period">Period</label>
+            <select id="period"class="custom-select" name="period">
+              <option selected>Select</option>
+              <option value="1d">1 day</option>
+              <option value="1wk">1 week</option>
+              <option value="1mo">1 month</option>
+            </select>
+          </div>
+            <br>
+          <button type="submit" class="btn btn-outline-dark my-2 my-sm-0">
+            Calculate
+          </button>
+          <a href="/profile" class="btn btn-outline-dark my-2 my-sm-0">Profile</a>
+        </form>
+      </div>
+    </div>
+</div>

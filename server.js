@@ -6,9 +6,17 @@ const passport = require('passport');
 const expressLayouts = require('express-ejs-layouts');
 const LocalStrategy = require('passport-local').Strategy;
 const bcrypt = require('bcrypt');
+var cov = require( 'compute-covariance' );
+var unirest = require("unirest");
+const math = require('mathjs');
+
 const { ensureAuthenticated, forwardAuthenticated } = require('./resources/auth');
+const {optimize, periodicReturns, htmlDateToUnixTimestamp, normalizeVectorLength, periodicPrices} = require('./resources/optimizer');
+var Portfolio = require('./resources/optimizer');
+
 
 const app = express();
+
 
 // Passport Config
 passport.use(
@@ -234,10 +242,6 @@ app.get('/login', (req, res) => {
     });
 });
 
-// Need to fix this login method and get flash to work
-=======
-// Login Handler
->>>>>>> login
 app.post('/login', (req, res, next) => {
     const { email } = req.body;
     let errors = [];
@@ -251,16 +255,12 @@ app.post('/login', (req, res, next) => {
                     errors
                 });
         } else {
-<<<<<<< HEAD
-            console.log('Email verified via AWS instance. User Name: ', data.user_first_name);
-            return res.redirect('/dashboard');
-=======
             passport.authenticate('local', {
-                successRedirect: '/dashboard',
+                successRedirect: '/profile',
                 failureRedirect: '/login',
                 failureFlash: true
             })(req, res, next);
->>>>>>> login
+
         }
     })
     .catch(err => {
@@ -282,12 +282,163 @@ app.get('/dashboard', ensureAuthenticated, (req, res) => {
     });
 });
 
-//Reset Page
+
+app.get('/profile', ensureAuthenticated, (req, res) => {
+    res.render('pages/profile', {
+        name: req.user.user_first_name
+    });
+});
+
 app.get('/reset', (req, res) => {
     res.render('pages/reset', {
         my_title: 'Reset Page'
     });
 });
+
+
+// Optimization
+app.get('/optimization', (req, res) => {
+    res.render('pages/optimization');
+});
+
+app.get('/calculator', ensureAuthenticated, (req, res)=>{
+    res.redirect('/optimization');
+})
+
+app.post('/calculator', ensureAuthenticated, (req, res, next) => {
+    
+    //strings, has no error for whether not it is an acceptable stock
+    var stock1 = req.body.stock1;
+    var stock2 = req.body.stock2;
+    var stock3 = req.body.stock3;
+
+    var startString = req.body.start;
+    var endString = req.body.end;
+    //unix timestamps
+    var start = htmlDateToUnixTimestamp(req.body.start); 
+    var end = htmlDateToUnixTimestamp(req.body.end);
+    //html select element - string
+    var period = req.body.period;
+    //return turned from whole number between 0-100 into real percent
+    var req_return_unformatted = req.body.req_return;
+    var req_return = req_return_unformatted/100;
+    //budget shouldnt need to be changed. no option for cents or anything yet but im looking into it
+    var budget = req.body.budget;
+    // Initialize return vectors
+    var stock1_returns;
+    var stock2_returns;
+    var stock3_returns;
+    var r_1, r_2, r_3, r;
+    var p1, p2, p3;
+    
+    unirest("GET", "https://apidojo-yahoo-finance-v1.p.rapidapi.com/stock/v2/get-historical-data")
+        .headers({
+            "x-rapidapi-host": "apidojo-yahoo-finance-v1.p.rapidapi.com",
+            "x-rapidapi-key": "3a6c5f19f5msh7f6a6a8ab33137dp1ff5c3jsnedbc4cb3b72b"
+        })
+        .query({
+            "frequency": period,
+            "filter": "history",
+            "period1": start,
+            "period2": end,
+            "symbol": stock1
+        }).end(function (res1) {
+            if (res1.error) throw new Error(res1.error);
+            //console.log(res.body);
+            //console.log(res1.body.prices[0])
+            stock1_returns = res1.body.prices;
+            unirest("GET", "https://apidojo-yahoo-finance-v1.p.rapidapi.com/stock/v2/get-historical-data")
+                .headers({
+                    "x-rapidapi-host": "apidojo-yahoo-finance-v1.p.rapidapi.com",
+                    "x-rapidapi-key": "3a6c5f19f5msh7f6a6a8ab33137dp1ff5c3jsnedbc4cb3b72b"
+                })
+                .query({
+                    "frequency": period,
+                    "filter": "history",
+                    "period1": start,
+                    "period2": end,
+                    "symbol": stock2
+                }).end(function (res2) {
+                    if (res2.error) throw new Error(res2.error);
+                    //console.log(res.body);
+                    //console.log(res2.body.prices[0])
+                    stock2_returns = res2.body.prices;
+                    unirest("GET", "https://apidojo-yahoo-finance-v1.p.rapidapi.com/stock/v2/get-historical-data")
+                        .headers({
+                            "x-rapidapi-host": "apidojo-yahoo-finance-v1.p.rapidapi.com",
+                            "x-rapidapi-key": "3a6c5f19f5msh7f6a6a8ab33137dp1ff5c3jsnedbc4cb3b72b"
+                        })
+                        .query({
+                            "frequency": period,
+                            "filter": "history",
+                            "period1": start,
+                            "period2": end,
+                            "symbol": stock3
+                        }).end(function (res3) {
+                            if (res3.error) throw new Error(res3.error);
+
+                            stock3_returns = res3.body.prices;
+                            
+                            // Calculate expected returns vectors
+                            r_1 = periodicReturns(stock1_returns);
+                            r_2 = periodicReturns(stock2_returns);
+                            r_3 = periodicReturns(stock3_returns);
+
+                            // Get periodic prices
+                            p1 = periodicPrices(stock1_returns);
+                            p2 = periodicPrices(stock2_returns);
+                            p3 = periodicPrices(stock3_returns);
+
+                            // Make sure vectors are same length for covariance calculation
+                            var r1r2 = normalizeVectorLength(r_1, r_2);
+                            var r1r3 = normalizeVectorLength(r_1, r_3);
+                            r_1 = r1r2[0];
+                            r_2 = r1r2[1];
+                            r_3 = r1r3[1];
+
+                            // Calculate r_tilda -- the mean returns for each stock
+                            r = math.mean([r_1, r_2, r_3], 1);
+                            r = r.map(function(x) {return x * 100});
+                            console.log("Mean Expected Return Vector (r): ", math.round(r,2), "%");
+                            
+                            // console.log("R1 Length: ", r_1.length);
+                            // console.log("R2 Length: ", r_2.length);
+                            // console.log("R3 Length: ", r_3.length);
+                            var mat = cov(r_1, r_2, r_3);
+                            //console.log("Covariance Matrix: ", mat);
+                            
+                            // Solve for optimal asset allocation distribution
+                            var ans = optimize(mat, r, req_return);
+                            ans = ans.map(function(x) {return x * 100});
+                            console.log("Final Recommended Distribution: ", math.round(ans,2), "%");
+
+                            // Return = return_i * allocation_i
+                            var ret = math.dot(r, ans)
+                            console.log("Expected Return: ", math.round(ret,2), "%");
+
+                            // Standard Deviation '=' Risk
+                            var risk = math.multiply(math.transpose(ans), mat, ans);
+                            risk = risk**2;
+                            console.log("Expected Risk: ", math.round(risk,2), "%");
+
+                            //var std_dev = math.sqrt(math.diag(mat));
+
+                            res.render('pages/dashboard', 
+                                {name: req.user.user_first_name,
+                                    name1: stock1, name2: stock2, name3: stock3,
+                                    volatility: math.round(risk,2),
+                                    exp_ret: math.round(ret,2),
+                                    x1 : math.round(ans[0], 0),
+                                    x2: math.round(ans[1], 0),
+                                    x3: math.round(ans[2], 0),
+                                    prices1: p1, prices2: p2, prices3: p3,
+                                    start_date: startString, end_date: endString, frequency: period
+                                });
+                        }); 
+                });
+        });
+});
+
 
 const PORT = process.env.PORT || 3000;
 

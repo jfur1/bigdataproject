@@ -1,3 +1,287 @@
+
+<h1 class="mt-4">Dashboard</h1>
+<p class="lead mb-3">Welcome <%= name %></p>
+<a href="/profile" class="btn btn-secondary">Profile</a>
+<a href="/logout" class="btn btn-secondary">Logout</a>
+<br>
+<br>
+<style>
+    table, th, td {
+      border: 1px solid black;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 5px;
+      text-align: left;
+    }
+</style>
+
+<div class = "container-fluid">
+  <div class = "row">
+    <div class="col-sm-4">
+      <h4><%= typeof name1 != 'undefined' ? 'Optimal Distribution' 
+        : 'No Portfolio to Display' %></h4>
+      <table style="width:50%">
+          <tr>
+            <th>Asset</th>
+            <th>Budget Allocation</th>
+          </tr>
+          <tr>
+            <td><%= typeof name1 != 'undefined' ? name1 : '' %></td>
+            <td><%= typeof x1 != 'undefined' ? x1 : ''%>%</td>
+          </tr>
+          <tr>
+              <td><%= typeof name2 != 'undefined' ? name2 : '' %></td>
+              <td><%= typeof x2 != 'undefined' ? x2 : ''%>%</td>
+          </tr>
+          <tr>
+              <td><%= typeof name3 != 'undefined' ? name3 : '' %></td>
+              <td><%= typeof x3 != 'undefined' ? x3 : ''%>%</td>
+            </tr>
+        </table>
+    </div>
+    <div class="col-sm-4">
+      <div id="name1" data-test=<%= typeof name1 != 'undefined' ? name1 : '' %>></div>
+      <div id="name2" data-test=<%= typeof name2 != 'undefined' ? name2 : '' %>></div>
+      <div id="name3" data-test=<%= typeof name3 != 'undefined' ? name3 : '' %>></div>
+      <div id="x1" data-test=<%= typeof x1 != 'undefined' ? x1 : '' %>></div>
+      <div id="x2" data-test=<%= typeof x2 != 'undefined' ? x2 : '' %>></div>
+      <div id="x3" data-test=<%= typeof x3 != 'undefined' ? x3 : '' %>></div>
+      <div>
+          <br>
+          <canvas id="myPieChart" height="150" ></canvas>
+          <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+          <script>
+              var stock1 = document.getElementById("name1").dataset.test;
+              var stock2 = document.getElementById("name2").dataset.test;
+              var stock3 = document.getElementById("name3").dataset.test;
+              var x1 = document.getElementById("x1").dataset.test;
+              var x2 = document.getElementById("x2").dataset.test;
+              var x3 = document.getElementById("x3").dataset.test;
+              var ctx = document.getElementById("myPieChart").getContext("2d");
+              var data = {
+                  labels: [stock1, stock2, stock3],
+                  datasets: [
+                      {
+                          label: [stock1, stock2, stock3],
+                          data: [x1, x2, x3],
+                          backgroundColor: [
+                          'rgb(255, 99, 132)',
+                          'rgb(75, 192, 192)',
+                          'rgb(255, 205, 86)'
+                          ],
+                      }
+                  ]
+              };
+              var myDoughnutChart = new Chart(ctx, {
+                  type: 'doughnut',
+                  data: data
+              });
+          </script>
+        </div>
+    </div>
+    <div class="col-sm-4">
+      <br>
+      <h5>Expected Return: <%= exp_ret != 'undefined' ? exp_ret : '' %> %</h5>
+      <h5>Expected Risk: <%= volatility != 'undefined' ? volatility : '' %> %</h5>
+    </div>
+  </div>
+</div>
+
+<br><br>
+
+<br>
+
+<div id="stock1" data-test=<%= typeof name1 != 'undefined' ? name1 : '' %>></div>
+<div id="stock2" data-test=<%= typeof name2 != 'undefined' ? name2 : '' %>></div>
+<div id="stock3" data-test=<%= typeof name3 != 'undefined' ? name3 : '' %>></div>
+<div id="prices1" data-test=<%= typeof prices1 != 'undefined' ? prices1 : '' %>></div>
+<div id="prices2" data-test=<%= typeof prices2 != 'undefined' ? prices2 : '' %>></div>
+<div id="prices3" data-test=<%= typeof prices3 != 'undefined' ? prices3 : '' %>></div>
+<div id="start_date" data-test=<%= typeof start_date != 'undefined' ? start_date : '' %>></div>
+<div id="end_date" data-test=<%= typeof end_date != 'undefined' ? end_date : '' %>></div>
+<div class="container">
+    <br>
+    <h4>Monthly Closing Prices for Selected Dates</h4>
+    <br>
+    <canvas id="myChart" width="400" height="200"></canvas>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+    <script>
+        var stock1 = document.getElementById("stock1").dataset.test;
+        var stock2 = document.getElementById("stock2").dataset.test;
+        var stock3 = document.getElementById("stock3").dataset.test;
+        var prices1 = document.getElementById("prices1").dataset.test;
+        var prices2 = document.getElementById("prices2").dataset.test;
+        var prices3 = document.getElementById("prices3").dataset.test;
+        var start_date = document.getElementById("start_date").dataset.test;
+        var end_date = document.getElementById("end_date").dataset.test;
+        //prices array comes in as a giant string, so needs to be formatted
+        function formatPricesArray(arr){
+            var newArr = arr.split(',');
+            for(var i=0; i < newArr.length; i++){
+                newArr[i] = parseInt(newArr[i]);
+            }
+            return newArr;
+        }
+        prices1 = formatPricesArray(prices1);
+        prices2 = formatPricesArray(prices2);
+        prices3 = formatPricesArray(prices3);
+        console.log(prices1);
+        function monthDiff(d1, d2){
+            var m1 = parseInt(d1.substring(5,7));
+            var m2 = parseInt(d2.substring(5,7));
+            var y1 = parseInt(d1.substring(0,4));
+            var y2 = parseInt(d2.substring(0,4));
+            if((y2-y1) == 0){
+                return (m2-m1);
+            }else if((y2-y1) == 1){
+                var monthsInY1 = 12 - m1;
+                var monthsInY2 = m2;
+                var totalMonths = monthsInY1 + monthsInY2;
+                return totalMonths;
+            }
+            else{
+                var yDiff = y2 - y1 - 1;
+                var monthsInY1 = 12 - m1;
+                var monthsInY2 = m2;
+                var totalMonths = yDiff*12 + monthsInY1 + monthsInY2;
+                return totalMonths;
+            }
+        }
+        var month_start = parseInt(start_date.substring(5,7));
+        var num_months = monthDiff(start_date, end_date);
+        //how many days on average are in each month
+        var iterator = parseInt(prices1.length/num_months);
+        console.log(iterator);
+        //var months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        var monthly_prices1 = [];
+        var monthly_prices2 = [];
+        var monthly_prices3 = [];
+        var k=prices1.length-1;
+        for(var i=0; i < num_months; i++){
+            monthly_prices1[i] = prices1[k];
+            monthly_prices2[i] = prices2[k];
+            monthly_prices3[i] = prices3[k];
+            k-=iterator;
+        }
+        console.log(num_months);
+        var months = [];
+        var current_month = month_start;
+        for(var i=0; i < num_months; i++){
+            if(current_month == 1){
+                months[i] = "January";
+                current_month++;
+            }
+            else if(current_month == 2){
+                months[i] = "February";
+                current_month++;
+            }
+            else if(current_month == 3){
+                months[i] = "March";
+                current_month++;
+            }
+            else if(current_month == 4){
+                months[i] = "April";
+                current_month++;
+            }
+            else if(current_month == 5){
+                months[i] = "May";
+                current_month++;
+            }
+            else if(current_month == 6){
+                months[i] = "June";
+                current_month++;
+            }
+            else if(current_month == 7){
+                months[i] = "July";
+                current_month++;
+            }
+            else if(current_month == 8){
+                months[i] = "August";
+                current_month++;
+            }
+            else if(current_month == 9){
+                months[i] = "September";
+                current_month++;
+            }
+            else if(current_month == 10){
+                months[i] = "October";
+                current_month++;
+            }
+            else if(current_month == 11){
+                months[i] = "November";
+                current_month++;
+            }
+            else if(current_month == 12){
+                months[i] = "December";
+                current_month=1;
+            }
+        }
+        var data = {
+            labels: months,
+            datasets: [
+                {
+                    label: stock1,
+                    backgroundColor: "rgba(255, 99, 132,0.3)",
+                    pointBackgroundColor: "rgba(255, 99, 132,1)",
+                    pointHoverBackgroundColor: "rgba(255, 99, 132,0.6)",
+                    borderColor: "rgba(255, 99, 132,1)",
+                    pointBorderColor: '#fff',
+                    data: monthly_prices1
+                },
+                {
+                    label: stock2,
+                    backgroundColor: "rgba(75, 192, 192,0.3)",
+                    pointBackgroundColor: "rgba(75, 192, 192,1)",
+                    pointHoverBackgroundColor: "rgba(75, 192, 192,0.6)",
+                    borderColor: "rgba(75, 192, 192,1)",
+                    pointBorderColor: '#fff',
+                    data: monthly_prices2
+                },
+                {
+                    label: stock3,
+                    backgroundColor: "rgba(255, 205, 86,0.3)",
+                    pointBackgroundColor: "rgba(255, 205, 86,1)",
+                    pointHoverBackgroundColor: "rgba(255, 205, 86,0.6)",
+                    borderColor: "rgba(255, 205, 86,1)",
+                    pointBorderColor: '#fff',
+                    data: monthly_prices3
+                }
+            ]
+        };
+        var options = {
+            responsive:true,
+            scaleShowGridLines : true,
+            scaleGridLineColor : "rgba(0,0,0,.05)",
+            scaleGridLineWidth : 1,
+            scaleShowHorizontalLines: true,
+            scaleShowVerticalLines: true,
+            bezierCurve : false,
+            bezierCurveTension : 0.4,
+            pointDot : true,
+            pointDotRadius : 4,
+            pointDotStrokeWidth : 1,
+            pointHitDetectionRadius : 20,
+            datasetStroke : true,
+            datasetStrokeWidth : 2,
+            datasetFill : true,
+        };
+        var ctx = document.getElementById("myChart").getContext("2d");
+        var myLineChart = new Chart(ctx, {
+            type: 'line',
+            data: data,
+            options: options
+        });
+    </script>
+</div>
+
+<br>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.js"></script>
+<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+<script src="./myChart.js"></script>
+
+=======
 <%- include('../partials/header') %>
 <%- include('../partials/menu') %>
 <div class="container">
@@ -56,4 +340,3 @@
 				</div>
 			</div>-->
 </div>
-<%- include('../partials/footer') %>
