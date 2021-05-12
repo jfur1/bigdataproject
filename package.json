@@ -21,7 +21,7 @@
     "express-ejs-layouts": "^2.5.0",
     "express-session": "^1.17.0",
     "flash": "^1.1.0",
-    "mathjs": "^6.6.4",
+    "mathjs": "^7.5.1",
     "ml-fcnnls": "^1.1.0",
     "nodemon": "^2.0.2",
     "passport": "^0.4.1",
